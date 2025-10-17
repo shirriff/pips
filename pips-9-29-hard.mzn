@@ -1,4 +1,4 @@
-% Solve NYTimes Pips puzzle, Oct 7, 2025, easy
+% Solve NYTimes Pips puzzle, Sept 29, 2025, hard
 % Ken Shirriff, righto.com
 include "alldifferent.mzn";
 include "all_equal.mzn";
