@@ -1,0 +1,102 @@
+<html>
+<head>
+<script src="/minizinc-ide.js"></script>
+<script type="text/javascript">
+(async function() {
+  const size = 120; // Domino width in pixels
+  const userData = await MiniZincIDE.getUserData();
+  let xmargin = userData.xmargin;
+  let ymargin = userData.ymargin;
+  let W = userData.w; // Width of the grid
+  let H = userData.h; // Height of the grid
+  // userData also contains the grid, which is used in drawBackground()
+  let canvas = document.getElementById("canvas");
+  let ctx = canvas.getContext('2d');
+  ctx.font = "60px Arial";
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "center";
+  drawBackground();
+
+  // Draw the background grid
+  function drawBackground() {
+    let img = document.getElementById("bg");
+    img.src = userData.img;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  
+  // Handler to display the solution
+  function setSolution(data) {
+    drawBackground();
+    ctx.fillStyle = "#000";
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+      if (userData.grid[y][x]) {
+        ctx.fillText(data.pips[y][x], xmargin + (x + .5) * size, ymargin + (y + .5) * size + 3);
+        }
+      }
+    }
+    ctx.strokeStyle = "#98675a";
+    ctx.lineWidth = 4;
+    ctx.beginPath()
+    const shrink = 20;
+    // Draw horizontal dominoes
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W - 1; x++) {
+        if (data.dominogrid[y][x] > 0 && data.dominogrid[y][x] == data.dominogrid[y][x + 1]) {
+          ctx.rect(xmargin + x * size + shrink, ymargin + y * size + shrink,
+              2 * size - 2 * shrink, size - 2 * shrink);
+        }
+      }
+    }
+    // Draw vertical dominoes
+    for (let y = 0; y < H - 1; y++) {
+      for (let x = 0; x < W; x++) {
+        if (data.dominogrid[y][x] > 0 && data.dominogrid[y][x] == data.dominogrid[y + 1][x]) {
+          ctx.rect(xmargin + x * size + shrink, ymargin + y * size + shrink,
+              size - 2 * shrink, 2 * size - 2 * shrink);
+        }
+      }
+    }
+    ctx.stroke();
+  }
+
+  // Visualise last solution on startup
+  const numSols = await MiniZincIDE.getNumSolutions();
+  if (numSols > 0) {
+    const solution = await MiniZincIDE.getSolution(numSols - 1);
+    setSolution(solution.data);
+  }
+
+  // Show new solutions if we're following the latest solution
+  let followLatest = true;
+  MiniZincIDE.on('solution', (solution) => {
+    if (followLatest) {
+      setSolution(solution.data);
+    }
+  });
+
+  MiniZincIDE.on('goToSolution', async (index) => {
+    // Requesting index -1 turns on following latest solution
+    // Otherwise, we stop showing the latest solution and show the requested one
+    followLatest = index === -1;
+    const solution = await MiniZincIDE.getSolution(index);
+    setSolution(solution.data);
+  })
+})();
+</script>
+<style class="text/css">
+.wrapper2 { position: relative;}
+img { position: absolute; top: 0px; left: 0px;}
+canvas { position: absolute; top: 0px; left: 0px; z-index: 1}
+</style>
+</head>
+<body>
+<div class="wrapper1">
+  <div class="wrapper2">
+    <canvas id="canvas" width=1200 height=1200></canvas>
+    <img id="bg"></img>
+  </div>
+</div>
+
+</body>
+
